@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ROI Calculator</title>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Quattrocento Sans">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
+
+    <script src="Calculation.js"></script>
+</head>
+<body>
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+<div class="container">
+    <div class="row">
+        <h1>ROI Calculator</h1>
+        <p>This tool calculates Return on investments (ROI) and test automation pay off based on JIRA and Jenkins
+            data.</p>
+
+        <div class="centered_divider first_divider">
+        <span class="divider-span">
+            Step 1: Enter Data
+        </span>
+        </div>
+
+        <form id="roi-form">
+            <div id="fieldset_div_left" class="col-md-6">
+                <fieldset class="fieldset_class_left">
+                    <legend align="left">JIRA</legend>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right" title="Basic URL of Jira server"></span>
+                        Jira URL
+                        <input type="text" id="jiraUrl" name="jiraUrl" class="input_field"
+                               placeholder="Your JIRA project URL">
+                    </p>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right"
+                              title="Filter to fetch all Jira issues for new test case creation. Standard Jira query language is used. Example: &quot;Epic Link&quot;=WST-1108&status=Released"></span>
+                        New tests filter
+                        <input type="text" id="newTestCaseTicketsFilter" name="newTestCaseTicketsFilter"
+                               class="input_field" placeholder="Enter JIRA query">
+                    </p>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right"
+                              title="Filter to fetch all Jira issues for maintenance. Standard Jira query language is used. Example: summary~&quot;Investigate Failed builds on Jenkins UI suite&quot;"></span>
+                        Maintenance filter
+                        <input type="text" id="maintenanceTicketsFilter" name="maintenanceTicketsFilter"
+                               class="input_field" placeholder="Enter JIRA query">
+                    </p>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right"
+                              title="Filter to fetch all Jira issues for release support. Standard Jira query language is used. Example: labels=Release_Support"></span>
+                        Release support filter
+                        <input type="text" id="releaseSupportTicketsFilter" name="releaseSupportTicketsFilter"
+                               class="input_field" placeholder="Enter JIRA query">
+                    </p>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right"
+                              title="Max number of tickets that should be fetched from Jira"></span>
+                        Max # of issues
+                        <input type="text" id="maxResults" name="maxResults" class="input_field"
+                               placeholder="Enter max # of issues">
+                    </p>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right" title="Jira username"></span>
+                        Username
+                        <input type="text" id="username" name="username" class="input_field"
+                               placeholder="Your JIRA username">
+                    </p>
+                    <p>
+                        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                              data-placement="right" title="Jira password"></span>
+                        Password
+                        <input type="password" id="password" name="password" class="input_field"
+                               placeholder="Your JIRA password">
+                    </p>
+                </fieldset>
+            </div>
+
+            <div class="col-md-6">
+                <div class="fieldset_div_right">
+                    <fieldset class="fieldset_class">
+                        <legend align="left">General Parameters</legend>
+                        <p>
+                            <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                  data-placement="right" title="Average time to pass one test case manually"></span>
+                            Average time to pass manual test case
+                            <input type="text" id="averageTimeToPassManualTestCase"
+                                   name="averageTimeToPassManualTestCase" class="input_field"
+                                   placeholder="Enter time in minutes">
+                        </p>
+                        <p>
+                            <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                  data-placement="right" title="Total number of manual test cases"></span>
+                            Total number of manual test cases
+                            <input type="text" id="totalNumberOfManualTestCases" name="totalNumberOfManualTestCases"
+                                   class="input_field" placeholder="Enter # of test cases">
+                        </p>
+                        <p>
+                            <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                  data-placement="right"
+                                  title="Average cost per hour of one test automation engineer"></span>
+                            Hourly rate for automation QA
+                            <input type="text" id="autoCostsPerHour" name="autoCostsPerHour" class="input_field"
+                                   placeholder="Enter rate in dollars">
+                        </p>
+                        <p>
+                            <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                  data-placement="right" title="Average cost per hour of one manual engineer"></span>
+                            Hourly rate for manual QA
+                            <input type="text" id="manualCostsPerHour" name="manualCostsPerHour" class="input_field"
+                                   placeholder="Enter rate in dollars">
+                        </p>
+
+                    </fieldset>
+                </div>
+
+                <div class="fieldset_div_right">
+                    <fieldset class="fieldset_class">
+                        <legend align="left">Jenkins</legend>
+                        <div>
+                            <p>
+                                <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                      data-placement="right"
+                                      title="Select if you would like to set numbers of test runs per month manually or calculate automatically on base of Jenkins job (assumes that uses Jenkins Notifier service)"></span>
+                                Use Jenkins Data?
+                                <span id="jenkins_radio_check">
+                <label><input type="radio" id="jenkins_radio_yes" name="jenkins_radio" value="Yes"
+                              onclick="jenkins_radio_handler();" checked>Yes</label>
+                <label><input type="radio" id="jenkins_radio_no" name="jenkins_radio" value="No"
+                              onclick="jenkins_radio_handler();">No</label>
+            </span>
+                            </p>
+                        </div>
+
+                        <div id="jenkins_job_name">
+                            <p>
+                                <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                      data-placement="right"
+                                      title="Jenkins job name, on base of which will be calculated number of test runs per month. Assumed that job uses Jenkins Notifier service"></span>
+                                Jenkins job name
+                                <input type="text" id="jenkinsJobName" name="jenkinsJobName" class="input_field"
+                                       placeholder="Enter job name">
+                            </p>
+                        </div>
+
+                        <div id="jenkins_runs_per_month" style="display:none">
+                            <p>
+                                <span class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip"
+                                      data-placement="right" title="Average number of test runs per month"></span>
+                                # of runs per month
+                                <input type="text" id="runsPerPeriod" name="runsPerPeriod" class="input_field"
+                                       placeholder="Enter amount">
+                            </p>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+
+
+            <div id="centered_div">
+                <input type="submit" id="centered_div_calculate_button" value="Calculate ROI"/>
+                <button type="button" class="btn" id="centered_div_reset_button" onclick="resetData();">Reset</button>
+                <button type="button" class="btn" id="help_button" data-toggle="modal"
+                        data-target=".bd-example-modal-lg">Help
+                </button>
+            </div>
+        </form>
+
+
+        <div class="alert alert-danger" role="alert" id="calculation_error_div" style="display: none">
+            <strong>Error!</strong>
+            <span id="calculation_error"></span>
+        </div>
+
+
+        <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+
+                    <div id="help_text_content">
+                        <h1>ROI Calculator</h1>
+                        <h2 class="help_h2">Input parameters explanation</h2>
+
+                        <h3>General parameters</h3>
+                        <div class="help_popup_section">
+                            <table class="help_table">
+                                <tr>
+                                    <td class="help_popup_key">Average time to pass manual test case</td>
+                                    <td class="help_popup_value">Time in minutes, needed to pass test case manually</td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Total number of manual test cases</td>
+                                    <td class="help_popup_value">Total number of all manual test cases planned to be
+                                        automated
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Hourly rate for automation QA</td>
+                                    <td class="help_popup_value">Rate in dollars per one hour of automation engineer
+                                        work
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Hourly rate for manual QA</td>
+                                    <td class="help_popup_value">Rate in dollars per one hour of manual engineer work
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <h3>Jira</h3>
+                        <div class="help_popup_section">
+                            <table class="help_table">
+                                <tr>
+                                    <td class="help_popup_key">Jira URL</td>
+                                    <td class="help_popup_value">Base Jira api url</td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">New tests filter</td>
+                                    <td class="help_popup_value">Jira JQL query for tickets on new test case development
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Maintenance filter</td>
+                                    <td class="help_popup_value">Jira JQL query for tickets on maintenance</td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Release support filter</td>
+                                    <td class="help_popup_value">Jira JQL query for tickets on release support</td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Max # of issues</td>
+                                    <td class="help_popup_value">Max number of tickets, what will be fetched from Jira
+                                        on
+                                        each search filter.
+                                        <br><br>
+                                        Fields that are fetched from Jira ticket: Resolution date, Time spent, Assignee.
+                                        <br>
+                                        Assumptions:<br>
+                                        Assignee - if null, "default value" is used, by default team size is 1<br>
+                                        Resolution date - if null, current month is used, by default such ticket will be
+                                        included in current month
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Username</td>
+                                    <td class="help_popup_value">Jira username</td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Password</td>
+                                    <td class="help_popup_value">Jira password</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <h3>Jenkins</h3>
+                        <div class="help_popup_section">
+                            <table class="help_table container-fluid">
+                                <tr>
+                                    <td class="help_popup_key">Jenkins job name</td>
+                                    <td class="help_popup_value">Jenkins job name, on base of which will be calculated
+                                        number of test runs per month. Assumed that job uses Jenkins Notifier service.
+                                        <br>
+                                        <span>Jenkins Notifier service collects information about number of started Jenkins jobs by months.
+                                <br>To use if for a job:
+                                    <li style="margin-left:25px;">Install Jenkins notification plugin,
+                                        <a href="https://wiki.jenkins-ci.org/display/JENKINS/Notification+Plugin">Notification Plugin</a></li>
+                                    <li style="margin-left:25px;">Update configuration of desired job</li>
+                                        <img src="jenkins_notif.png" height="300" width="600">
+                                    </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key"># of runs per month</td>
+                                    <td class="help_popup_value">Number of whole test suite runs per month</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <h2 class="help_h2">Output parameters explanation</h2>
+
+                        <h3>ROI per month</h3>
+                        <div class="help_popup_section">
+                            <table class="help_table">
+                                <tr>
+                                    <td class="help_popup_key">Number of Test Cases Per Month</td>
+                                    <td class="help_popup_value">Cumulative number of Jira issues on new test case
+                                        creation
+                                        per months, calculated on base of
+                                        <span class="input_parameter">New tests filter</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Maintenance Hours Per Month</td>
+                                    <td class="help_popup_value">Sum of hours per month logged into Jira issues on
+                                        maintenance, calculated on base of
+                                        <span class="input_parameter">Maintenance filter</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Maintenance Percentage</td>
+                                    <td class="help_popup_value">Maintenance per month / Full capacity of automation
+                                        team
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Savings Hours Per Month</span></td>
+                                    <td class="help_popup_value"><span
+                                            class="input_parameter"># of runs per month</span>
+                                        * Number of test cases per month *
+                                        <span class="input_parameter">Average time to pass manual test case</span> / 60
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Pure Saving Hours Per Month</td>
+                                    <td class="help_popup_value">Savings Hours Per Month - Maintenance Hours Per Month
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Manual Engineers Savings</td>
+                                    <td class="help_popup_value">Pure Saving Hours Per Month / Working Hours Per
+                                        Month,where
+                                        <span style="font-weight: bold;">Working Hours Per Month</span>
+                                        = (Number of working days per month - Number of official holidays in Ukraine) *
+                                        8
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Saving Difference</td>
+                                    <td class="help_popup_value">Manual Engineers Savings in current month - Manual
+                                        Engineers Savings in previous month
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <h3>Automation pay off</h3>
+                        <div class="help_popup_section">
+
+                            <table class="help_table">
+                                <tr>
+                                    <td class="help_popup_key">Number of Test Cases Per Month</td>
+                                    <td class="help_popup_value">Cumulative number of Jira issues on new test case
+                                        creation
+                                        per months, calculated on base of
+                                        <span class="input_parameter">New tests filter</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Pure Automation Team Hours</td>
+                                    <td class="help_popup_value">Sum of hours spent by automation team on new test cases
+                                        creation, maintenance and release support calculated on base of
+                                        <span class="input_parameter">New tests filter</span>,
+                                        <span class="input_parameter">Maintenance filter</span> and
+                                        <span class="input_parameter">Release support filter</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Manual Hours Without Automation</td>
+                                    <td class="help_popup_value">
+                                        <span class="input_parameter"># of runs per month</span> *
+                                        <span class="input_parameter">Total number of manual test cases</span> *
+                                        <span class="input_parameter">Average time to pass manual test case</span> / 60
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Manual Hours With Automation</td>
+                                    <td class="help_popup_value">Manual Hours Without Automation - Savings Hours Per
+                                        Month
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Costs With Automation</td>
+                                    <td class="help_popup_value">Manual Costs Per Hour * Manual Hours With Automation +
+                                        Auto
+                                        Costs Per Hour * Pure Automation Team Hours
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Costs Without Automation</td>
+                                    <td class="help_popup_value">Manual Costs Per Hour * Manual Hours Without Automation
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Cumulative Costs With Automation</td>
+                                    <td class="help_popup_value">Costs With Automation in current month + Cumulative
+                                        Costs
+                                        With Automation in previous month
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Cumulative Costs Without Automation</td>
+                                    <td class="help_popup_value">Costs Without Automation in current month + Cumulative
+                                        Costs Without Automation in previous month
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Pure Auto vs Manual Costs</td>
+                                    <td class="help_popup_value">Cumulative Costs Without Automation - Cumulative Costs
+                                        With
+                                        Automation
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Total Auto Costs</td>
+                                    <td class="help_popup_value">Manual Costs Per Hour * Manual Hours With Automation +
+                                        Auto
+                                        Costs Per Hour * Full Automation Team Hours, where
+                                        <span style="font-weight: bold;">Full Automation Team Hours</span>
+                                        = Working Hours Per Month * Automation team size (Number of assignees for all
+                                        Jira issues per month)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Total Cumulative Auto Costs</td>
+                                    <td class="help_popup_value">Total Auto Costs in current month + Total Cumulative
+                                        Auto
+                                        Costs in previous month
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="help_popup_key">Full Auto vs Manual Costs</td>
+                                    <td class="help_popup_value">Total Cumulative Auto Costs - Cumulative Costs With
+                                        Automation
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="centered_divider hidden_results_content">
+        <span class="divider-span">
+            Step 2: Analyze Your Results
+        </span>
+        </div>
+
+        <div class="hidden_results_content container">
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#tab1" aria-controls="tab1" role="tab"
+                                                          data-toggle="tab">General</a></li>
+                <li role="presentation"><a href="#tab2" aria-controls="tab2" role="tab" data-toggle="tab">ROI</a></li>
+                <li role="presentation"><a href="#tab3" aria-controls="tab3" role="tab" data-toggle="tab">Automation pay
+                    off</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="tab1">
+                    <div id="final_results" class="hidden_results_content">
+                        <div id="final_savings"></div>
+                        <div id="final_roi"></div>
+                        <div id="final_pure_auto_payoff"></div>
+                        <div id="final_full_auto_payoff"></div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="tab2">
+                    <canvas id="roi_chart" class="hidden_results_content" width="1200" height="400"></canvas>
+                    <div id="table_roi_div" class="hidden_results_content" width="100%"></div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="tab3">
+                    <div class="centered_divider-2 hidden_results_content">
+                        <span class="divider-span-2">
+                        Automation team pure hours
+                        </span>
+                    </div>
+                    <canvas id="payoff_chart_per_month" class="hidden_results_content" width="1200"
+                            height="400"></canvas>
+
+                    <canvas id="cumulative_payoff_chart_per_month" class="hidden_results_content" width="1200"
+                            height="400"></canvas>
+
+                    <div class="centered_divider-2 hidden_results_content">
+                        <span class="divider-span-2">
+                        Automation team full hours
+                        </span>
+                    </div>
+
+                    <canvas id="total_payoff_chart_per_month" class="hidden_results_content" width="1200"
+                            height="400"></canvas>
+
+                    <canvas id="total_cumulative_payoff_chart_per_month" class="hidden_results_content" width="1200"
+                            height="400"></canvas>
+
+                    <div id="table_payoff_div" class="hidden_results_content" width="100%"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
