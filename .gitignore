@@ -1,2 +1,5 @@
-test.iml
-.idea/workspace.xml
+*.iml
+.idea/*
+target/*
+*.jar
+*.jar.original
